@@ -553,6 +553,10 @@ func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, erro
 		return nil, errors.Wrap(err, "Failed to read server response:\n")
 	}
 
+	if !s.Success {
+		return nil, errors.New(`Questrade responded with {"success": false}`)
+	}
+
 	return &WebsocketConnection{conn}, nil
 }
 
