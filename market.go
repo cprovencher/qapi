@@ -259,7 +259,7 @@ type Quote struct {
 	LowPrice float32 `json:"lowPrice"`
 
 	// Whether a quote is delayed (true) or real-time.
-	Delay int `json:"delay"`
+	Delay bool `json:"delay"`
 
 	// Whether trading in the symbol is currently halted.
 	IsHalted bool `json:"isHalted"`
