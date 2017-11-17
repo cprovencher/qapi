@@ -27,6 +27,7 @@ type Client struct {
 	RateLimitReset     time.Time
 	httpClient         *http.Client
 	transport          *http.Transport
+	wsConnections      map[interface{}]*WebsocketConnection
 }
 
 // Send an HTTP GET request, and return the processed response
@@ -533,7 +534,15 @@ func (c *Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error
 	return strconv.Itoa(p.Port), nil
 }
 
-func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, error) {
+
+// GetWebSocketConnection returns a questrade websocket for the service data type specified
+// Available types are order and quote
+func (c *Client) GetWebSocketConnection(port string, serviceType interface{}) (*WebsocketConnection, error) {
+	// TODO: check if there are cases we want to recreate ws conn
+	if c.wsConnections[serviceType] != nil {
+		return c.wsConnections[serviceType], nil
+	}
+
 	apiServer := c.Credentials.ApiServer[8 : len(c.Credentials.ApiServer)-1]
 	conn, _, err := websocket.DefaultDialer.Dial("wss://"+apiServer+":"+port, nil)
 	if err != nil {
@@ -558,7 +567,9 @@ func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, erro
 		return nil, errors.New(`Questrade responded with {"success": false}`)
 	}
 
-	return &WebsocketConnection{conn}, nil
+	c.wsConnections[serviceType] = &WebsocketConnection{conn}
+
+	return c.wsConnections[serviceType], nil
 }
 
 // NewClient is the factory function for clients - takes a refresh token and logs into
@@ -574,6 +585,7 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 			RefreshToken: refreshToken,
 		},
 		httpClient: client,
+		wsConnections: map[interface{}]*WebsocketConnection{},
 	}
 
 	err := c.Login(practice)
