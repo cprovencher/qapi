@@ -200,6 +200,19 @@ func (c *Client) GetPrimaryAccount() (Account, error) {
 	return Account{}, errors.New("Primary account not found in results")
 }
 
+// GetPositions returns the positions for the account with the specified account number
+func (c *Client) GetPositions(number string) ([]Position, error) {
+	pos := struct {
+		Positions []Position `json:"positions"`
+	}{}
+
+	err := c.get("v1/accounts/"+number+"/positions", &pos, url.Values{})
+	if err != nil {
+		return []Position{}, err
+	}
+	return pos.Positions, nil
+}
+
 // GetBalances returns the balances for the account with the specified account number
 func (c *Client) GetBalances(number string) (AccountBalances, error) {
 	bal := AccountBalances{}
@@ -459,7 +472,7 @@ func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 		return -1, []Order{}, err
 	}
 
-	return res.OrderID, res.Orders, nil
+	return res.OrderID, res.Orders,  nil
 }
 
 // DeleteOrder - Sends a delete request for the specified order
