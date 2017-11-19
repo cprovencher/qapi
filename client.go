@@ -278,6 +278,31 @@ func (c *Client) GetOrdersByID(number string, orderIds ...int) ([]Order, error) 
 	return o.Orders, nil
 }
 
+// GetActivities retrieve account activities, including cash transactions, dividends, trades,
+// In the given granularity
+func (c *Client) GetActivities(number string, start time.Time, end time.Time) ([]Activity, error) {
+	// Format the times if they are not zero-values
+	params := url.Values{}
+	if !start.Equal(time.Time{}) {
+		params.Add("startTime", start.Format(time.RFC3339))
+	}
+
+	if !end.Equal(time.Time{}) {
+		params.Add("endTime", end.Format(time.RFC3339))
+	}
+
+	pos := struct {
+		Activities []Activity `json:"activities"`
+	}{}
+
+	err := c.get("v1/accounts/"+number+"/activities", &pos, params)
+
+	if err != nil {
+		return []Activity{}, err
+	}
+	return pos.Activities, nil
+}
+
 // GetSymbols returns detailed symbol information for the given symbol ID's
 func (c *Client) GetSymbols(ids ...int) ([]Symbol, error) {
 	idStr := ""
@@ -442,7 +467,7 @@ func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 		return -1, []Order{}, err
 	}
 
-	return res.OrderID, res.Orders,  nil
+	return res.OrderID, res.Orders, nil
 }
 
 // DeleteOrder - Sends a delete request for the specified order

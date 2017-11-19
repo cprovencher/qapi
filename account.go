@@ -171,7 +171,54 @@ type Execution struct {
 
 // {"orders" : [...], "executions" : [...], "accountNumber" : XXXXXXXX}
 type Notification struct {
-	Orders []Order`json:"orders"`
-	Executions []Execution `json:"executions"`
-	AccountNumber string `json:"accountNumber"`
+	Orders        []Order     `json:"orders"`
+	Executions    []Execution `json:"executions"`
+	AccountNumber string      `json:"accountNumber"`
+}
+
+// Activities belonging to an Account
+//
+// Ref: http://www.questrade.com/api/documentation/rest-operations/account-calls/accounts-id-activities
+type Activity struct {
+	// Trade date.
+	TradeDate time.Time `json:"tradeDate"`
+
+	// Transaction date.
+	TransactionDate time.Time `json:"transactionDate"`
+
+	// Settlement date.
+	SettlementDate time.Time `json:"settlementDate"`
+
+	// Activity action.
+	Action string `json:"action"`
+
+	// Execution symbol.
+	Symbol string `json:"symbol"`
+
+	// Internal symbol identifier
+	SymbolId uint64 `json:"symbolId"`
+
+	// Activity description
+	Description string `json:"description"`
+
+	// Currency of the activity figure(e.g., "USD" or "CAD").
+	Currency []string `json:"currency"`
+
+	// Quantity fulfilled by the activity
+	Quantity float32 `json:"quantity"`
+
+	// Activity price.
+	Price float32 `json:"price"`
+
+	// Activity gross amount.
+	GrossAmount float32 `json:"grossAmount"`
+
+	// Questrade commission.
+	Commission float32 `json:"commission"`
+
+	// Net amount of the activity
+	NetAmount float32 `json:"netAmount"`
+
+	// Type of activity (e.g, "Interest")
+	Type string `json:"type"`
 }
