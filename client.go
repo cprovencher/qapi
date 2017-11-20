@@ -15,6 +15,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+	"log"
+	"github.com/mrancourt/sherquote-server/util"
 )
 
 // A client is the structure that will be used to consume the API
@@ -181,6 +183,31 @@ func (c *Client) GetAccounts() (int, []Account, error) {
 	}
 
 	return list.UserID, list.Accounts, nil
+}
+
+// Return value of this function to be used in getAccountBalanceInUSD call
+func (c *Client) GetPrimaryAccount() (Account, error) {
+	var accounts []Account
+	var err error
+	for {
+		tries := 0
+		_, accounts, err = c.GetAccounts()
+		if err != nil {
+			tries++
+			log.Printf("%+v\n", errors.Wrap(err, "Unable to get accounts"))
+			time.Sleep(util.ExpBackoff(tries))
+			continue
+		}
+		break
+	}
+
+	for _, account := range accounts {
+		if account.IsPrimary {
+			return account, nil
+		}
+	}
+
+	return Account{}, errors.New("Primary account not found in results")
 }
 
 // GetBalances returns the balances for the account with the specified account number
