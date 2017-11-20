@@ -31,13 +31,13 @@ func newQuestradeError(res *http.Response, body []byte) QuestradeError {
 }
 
 func (q QuestradeError) Error() string {
-	return fmt.Sprintf("\nQuestradeError:\n" +
-	                   "\tStatus code: HTTP %d\n" +
-	                   "\tEndpoint: %s\n" +
-	                   "\tError code: %d\n" +
-	                   "\tMessage: %s\n",
-	                   q.StatusCode,
-	                   q.Endpoint,
-	                   q.Code,
-	                   q.Message)
+	return fmt.Sprintf("\nQuestradeError:\n"+
+		"\tStatus code: HTTP %d\n"+
+		"\tEndpoint: %s\n"+
+		"\tError code: %d\n"+
+		"\tMessage: %s\n",
+		q.StatusCode,
+		q.Endpoint,
+		q.Code,
+		q.Message)
 }

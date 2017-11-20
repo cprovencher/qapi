@@ -22,6 +22,7 @@ import (
 // rate limit information, and the login session timer.
 type Client struct {
 	Credentials        LoginCredentials
+	PrimaryAccount     Account
 	SessionTimer       *time.Timer
 	RateLimitRemaining int
 	RateLimitReset     time.Time
@@ -181,6 +182,22 @@ func (c *Client) GetAccounts() (int, []Account, error) {
 	}
 
 	return list.UserID, list.Accounts, nil
+}
+
+// Return value of this function to be used in getAccountBalanceInUSD call
+func (c *Client) GetPrimaryAccount() (Account, error) {
+	_, accounts, err := c.GetAccounts()
+	if err != nil {
+		return Account{}, err
+	}
+
+	for _, account := range accounts {
+		if account.IsPrimary {
+			return account, nil
+		}
+	}
+
+	return Account{}, errors.New("Primary account not found in results")
 }
 
 // GetBalances returns the balances for the account with the specified account number
@@ -442,7 +459,7 @@ func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 		return -1, []Order{}, err
 	}
 
-	return res.OrderID, res.Orders,  nil
+	return res.OrderID, res.Orders, nil
 }
 
 // DeleteOrder - Sends a delete request for the specified order
@@ -577,6 +594,11 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 	}
 
 	err := c.Login(practice)
+	if err != nil {
+		return nil, err
+	}
+
+	c.PrimaryAccount, err = c.GetPrimaryAccount()
 	if err != nil {
 		return nil, err
 	}

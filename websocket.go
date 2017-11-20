@@ -15,7 +15,7 @@ func (websocketConnection *WebsocketConnection) ReadQuotes() ([]Quote, error) {
 	}{}
 
 	err := websocketConnection.Conn.ReadJSON(&q)
-	if err !=nil {
+	if err != nil {
 		return nil, errors.Wrap(err, "WebSocket connection failed to read json:\n")
 	}
 
