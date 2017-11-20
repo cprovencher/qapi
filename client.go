@@ -21,13 +21,13 @@ import (
 // endpoints. It holds the login credentials, http client/transport,
 // rate limit information, and the login session timer.
 type Client struct {
-	Credentials        LoginCredentials
-	PrimaryAccount     Account
-	SessionTimer       *time.Timer
-	RateLimitRemaining int
-	RateLimitReset     time.Time
-	httpClient         *http.Client
-	transport          *http.Transport
+	Credentials          LoginCredentials
+	PrimaryAccountNumber string
+	SessionTimer         *time.Timer
+	RateLimitRemaining   int
+	RateLimitReset       time.Time
+	httpClient           *http.Client
+	transport            *http.Transport
 }
 
 // Send an HTTP GET request, and return the processed response
@@ -611,10 +611,11 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 		return nil, err
 	}
 
-	c.PrimaryAccount, err = c.GetPrimaryAccount()
+	primaryAccount, err := c.GetPrimaryAccount()
 	if err != nil {
 		return nil, err
 	}
+	c.PrimaryAccountNumber = primaryAccount.Number
 
 	return c, nil
 }
