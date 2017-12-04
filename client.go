@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+	"log"
 )
 
 // A client is the structure that will be used to consume the API
@@ -22,12 +23,12 @@ import (
 // rate limit information, and the login session timer.
 type Client struct {
 	Credentials        LoginCredentials
-	PrimaryAccount     Account
 	SessionTimer       *time.Timer
 	RateLimitRemaining int
 	RateLimitReset     time.Time
 	httpClient         *http.Client
 	transport          *http.Transport
+	primaryAccount     Account
 }
 
 // Send an HTTP GET request, and return the processed response
@@ -185,7 +186,7 @@ func (c *Client) GetAccounts() (int, []Account, error) {
 }
 
 // Return value of this function to be used in getAccountBalanceInUSD call
-func (c *Client) GetPrimaryAccount() (Account, error) {
+func (c *Client) getPrimaryAccount() (Account, error) {
 	_, accounts, err := c.GetAccounts()
 	if err != nil {
 		return Account{}, err
@@ -198,6 +199,13 @@ func (c *Client) GetPrimaryAccount() (Account, error) {
 	}
 
 	return Account{}, errors.New("Primary account not found in results")
+}
+
+func (c *Client) GetPrimaryAccount() Account {
+	if c.primaryAccount == (Account{}) {
+		log.Fatal("Primary account is not defined")
+	}
+	return c.primaryAccount
 }
 
 // GetPositions returns the positions for the account with the specified account number
@@ -611,7 +619,7 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 		return nil, err
 	}
 
-	c.PrimaryAccount, err = c.GetPrimaryAccount()
+	c.primaryAccount, err = c.getPrimaryAccount()
 	if err != nil {
 		return nil, err
 	}
