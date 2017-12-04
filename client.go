@@ -32,7 +32,7 @@ type Client struct {
 }
 
 // Send an HTTP GET request, and return the processed response
-func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
+func (c Client) get(endpoint string, out interface{}, query url.Values) error {
 	req, err := http.NewRequest("GET", c.Credentials.ApiServer+endpoint+query.Encode(), nil)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 }
 
 // Format the message body, send an HTTP POST request, and return the processed response
-func (c *Client) post(endpoint string, out interface{}, body interface{}) error {
+func (c Client) post(endpoint string, out interface{}, body interface{}) error {
 	// Attempt to marshall the body as JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
@@ -75,7 +75,7 @@ func (c *Client) post(endpoint string, out interface{}, body interface{}) error 
 // the error code, or unmarshalls the JSON response, extracts
 // rate limit info, and places it into the object
 // output parameter. This function closes the response body after reading it.
-func (c *Client) processResponse(res *http.Response, out interface{}) error {
+func (c Client) processResponse(res *http.Response, out interface{}) error {
 	body, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
@@ -102,7 +102,7 @@ func (c *Client) processResponse(res *http.Response, out interface{}) error {
 // and exchanges it for an access token. Returns a timer that
 // expires when the login session is over. If the practice flag is
 // true, then the client will log into the practice server.
-func (c *Client) Login(practice bool) error {
+func (c Client) Login(practice bool) error {
 	login := loginServerURL
 	if practice {
 		login = practiceLoginServerURL
@@ -128,7 +128,7 @@ func (c *Client) Login(practice bool) error {
 // RevokeAuth revokes authorization of the refresh token
 // NOTE - You will have to create another manual authorization
 // on the Questrade website to use an application again.
-func (c *Client) RevokeAuth() error {
+func (c Client) RevokeAuth() error {
 	vars := url.Values{"token": {c.Credentials.AccessToken}}
 
 	res, err := c.httpClient.PostForm(loginServerURL+"revoke", vars)
@@ -156,7 +156,7 @@ func (c *Client) RevokeAuth() error {
 }
 
 // GetServerTime retrieves the current time on Questrade's server
-func (c *Client) GetServerTime() (time.Time, error) {
+func (c Client) GetServerTime() (time.Time, error) {
 	t := struct {
 		Time time.Time `json:"time"`
 	}{}
@@ -171,7 +171,7 @@ func (c *Client) GetServerTime() (time.Time, error) {
 
 // GetAccounts returns the logged-in User ID, and a list of accounts
 // belonging to that user.
-func (c *Client) GetAccounts() (int, []Account, error) {
+func (c Client) GetAccounts() (int, []Account, error) {
 	list := struct {
 		UserID   int       `json:"userId"`
 		Accounts []Account `json:"accounts"`
@@ -186,7 +186,7 @@ func (c *Client) GetAccounts() (int, []Account, error) {
 }
 
 // Return value of this function to be used in getAccountBalanceInUSD call
-func (c *Client) getPrimaryAccount() (Account, error) {
+func (c Client) getPrimaryAccount() (Account, error) {
 	_, accounts, err := c.GetAccounts()
 	if err != nil {
 		return Account{}, err
@@ -201,7 +201,7 @@ func (c *Client) getPrimaryAccount() (Account, error) {
 	return Account{}, errors.New("Primary account not found in results")
 }
 
-func (c *Client) GetPrimaryAccount() Account {
+func (c Client) GetPrimaryAccount() Account {
 	if c.primaryAccount == (Account{}) {
 		log.Fatal("Primary account is not defined")
 	}
@@ -209,7 +209,7 @@ func (c *Client) GetPrimaryAccount() Account {
 }
 
 // GetPositions returns the positions for the account with the specified account number
-func (c *Client) GetPositions(number string) ([]Position, error) {
+func (c Client) GetPositions(number string) ([]Position, error) {
 	pos := struct {
 		Positions []Position `json:"positions"`
 	}{}
@@ -222,7 +222,7 @@ func (c *Client) GetPositions(number string) ([]Position, error) {
 }
 
 // GetBalances returns the balances for the account with the specified account number
-func (c *Client) GetBalances(number string) (AccountBalances, error) {
+func (c Client) GetBalances(number string) (AccountBalances, error) {
 	bal := AccountBalances{}
 
 	err := c.get("v1/accounts/"+number+"/balances", &bal, url.Values{})
@@ -236,7 +236,7 @@ func (c *Client) GetBalances(number string) (AccountBalances, error) {
 // GetExecutions returns the number of executions for a given account between the start and end times
 // If the times are zero-value, then the API will default the start and end times to the beginning
 // and end of the current day.
-func (c *Client) GetExecutions(number string, start time.Time, end time.Time) ([]Execution, error) {
+func (c Client) GetExecutions(number string, start time.Time, end time.Time) ([]Execution, error) {
 	// Format the times if they are not zero-values
 	params := url.Values{}
 	if !start.Equal(time.Time{}) {
@@ -266,7 +266,7 @@ func (c *Client) GetExecutions(number string, start time.Time, end time.Time) ([
 // and end of the current day.
 // TODO - Verify order state enumeration in accordance with API docs
 // See: http://www.questrade.com/api/documentation/rest-operations/account-calls/accounts-id-orders
-func (c *Client) GetOrders(number string, start time.Time, end time.Time, state string) ([]Order, error) {
+func (c Client) GetOrders(number string, start time.Time, end time.Time, state string) ([]Order, error) {
 	// Format the times if they are not zero-values
 	params := url.Values{}
 	if !start.Equal(time.Time{}) {
@@ -292,7 +292,7 @@ func (c *Client) GetOrders(number string, start time.Time, end time.Time, state 
 }
 
 // GetOrdersByID returns the orders specified by the list of OrderID's
-func (c *Client) GetOrdersByID(number string, orderIds ...int) ([]Order, error) {
+func (c Client) GetOrdersByID(number string, orderIds ...int) ([]Order, error) {
 	idStr := ""
 	for k, v := range orderIds {
 		idStr += strconv.Itoa(v)
@@ -317,7 +317,7 @@ func (c *Client) GetOrdersByID(number string, orderIds ...int) ([]Order, error) 
 }
 
 // GetSymbols returns detailed symbol information for the given symbol ID's
-func (c *Client) GetSymbols(ids ...int) ([]Symbol, error) {
+func (c Client) GetSymbols(ids ...int) ([]Symbol, error) {
 	idStr := ""
 	for k, v := range ids {
 		idStr += strconv.Itoa(v)
@@ -343,7 +343,7 @@ func (c *Client) GetSymbols(ids ...int) ([]Symbol, error) {
 
 // SearchSymbols returns symbol search matches for a symbol prefix, at a given offset from the
 // beginning of the search results.
-func (c *Client) SearchSymbols(prefix string, offset int) ([]SymbolSearchResult, error) {
+func (c Client) SearchSymbols(prefix string, offset int) ([]SymbolSearchResult, error) {
 	params := url.Values{}
 	params.Add("prefix", prefix)
 	params.Add("offset", strconv.Itoa(offset))
@@ -362,7 +362,7 @@ func (c *Client) SearchSymbols(prefix string, offset int) ([]SymbolSearchResult,
 
 // GetOptionChain Retrieves an option chain for a particular underlying symbol.
 // TODO - More comprehensive tests - perhaps I should learn what an option chain is?
-func (c *Client) GetOptionChain(id int) ([]OptionChain, error) {
+func (c Client) GetOptionChain(id int) ([]OptionChain, error) {
 	o := struct {
 		Options []OptionChain `json:"options"`
 	}{}
@@ -375,7 +375,7 @@ func (c *Client) GetOptionChain(id int) ([]OptionChain, error) {
 }
 
 // GetMarkets retrieves information about supported markets
-func (c *Client) GetMarkets() ([]Market, error) {
+func (c Client) GetMarkets() ([]Market, error) {
 	m := struct {
 		Markets []Market `json:"markets"`
 	}{}
@@ -389,7 +389,7 @@ func (c *Client) GetMarkets() ([]Market, error) {
 
 // GetQuote retrieves a single Level 1 market data quote for a single symbol
 // TODO - Test
-func (c *Client) GetQuote(id int) (Quote, error) {
+func (c Client) GetQuote(id int) (Quote, error) {
 	idStr := strconv.Itoa(id)
 
 	q := struct {
@@ -424,7 +424,7 @@ func buildIdString(ids []int) string {
 
 // GetQuotes retrieves a single Level 1 market data quote for many symbols
 // TODO - Test
-func (c *Client) GetQuotes(ids []int) ([]Quote, error) {
+func (c Client) GetQuotes(ids []int) ([]Quote, error) {
 	params := url.Values{}
 	params.Add("ids", buildIdString(ids))
 
@@ -443,7 +443,7 @@ func (c *Client) GetQuotes(ids []int) ([]Quote, error) {
 // GetOrderImpact calculates the impact that a given order will have on an
 // account without placing it.
 // See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-impact
-func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
+func (c Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 	// Construct the endpoint - will be different if the impact is being calculated on
 	// an order that already exists
 	endpoint := fmt.Sprintf("v1/accounts/%s/orders/", req.AccountID)
@@ -463,7 +463,7 @@ func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 
 // PlaceOrder submits an order request, or an update to an existing order to Questrade
 // See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders
-func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
+func (c Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 	// Construct the endpoint
 	endpoint := fmt.Sprintf("v1/accounts/%s/orders/", req.AccountID)
 	if req.OrderID != 0 {
@@ -485,7 +485,7 @@ func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 
 // DeleteOrder - Sends a delete request for the specified order
 // See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-orderid
-func (c *Client) DeleteOrder(acctNum string, orderID int) error {
+func (c Client) DeleteOrder(acctNum string, orderID int) error {
 	endpoint := fmt.Sprintf("accounts/%s/orders/%d", acctNum, orderID)
 	req, err := http.NewRequest("DELETE", c.Credentials.ApiServer+endpoint, nil)
 	if err != nil {
@@ -509,7 +509,7 @@ func (c *Client) DeleteOrder(acctNum string, orderID int) error {
 // GetCandles retrieves historical market data between the start and end dates,
 // in the given data granularity.
 // See: http://www.questrade.com/api/documentation/rest-operations/market-calls/markets-candles-id
-func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval string) ([]Candlestick, error) {
+func (c Client) GetCandles(id int, start time.Time, end time.Time, interval string) ([]Candlestick, error) {
 	params := url.Values{}
 	params.Add("startTime", start.Format(time.RFC3339))
 	params.Add("endTime", end.Format(time.RFC3339))
@@ -528,7 +528,7 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 
 // Gets the port number to which notifications will be streamed
 // See: http://www.questrade.com/api/documentation/streaming
-func (c *Client) GetNotificationStreamPort(useWebSocket bool) (string, error) {
+func (c Client) GetNotificationStreamPort(useWebSocket bool) (string, error) {
 	mode := "RawSocket"
 	if useWebSocket {
 		mode = "WebSocket"
@@ -548,7 +548,7 @@ func (c *Client) GetNotificationStreamPort(useWebSocket bool) (string, error) {
 
 // Gets the port number to which quotes will be streamed
 // See: http://www.questrade.com/api/documentation/streaming
-func (c *Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error) {
+func (c Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error) {
 	mode := "RawSocket"
 	if useWebSocket {
 		mode = "WebSocket"
@@ -571,7 +571,7 @@ func (c *Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error
 	return strconv.Itoa(p.Port), nil
 }
 
-func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, error) {
+func (c Client) GetWebSocketConnection(port string) (*WebsocketConnection, error) {
 	apiServer := c.Credentials.ApiServer[8 : len(c.Credentials.ApiServer)-1]
 	conn, _, err := websocket.DefaultDialer.Dial("wss://"+apiServer+":"+port, nil)
 	if err != nil {
@@ -601,13 +601,13 @@ func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, erro
 
 // NewClient is the factory function for clients - takes a refresh token and logs into
 // either the practice or live server.
-func NewClient(refreshToken string, practice bool) (*Client, error) {
+func NewClient(refreshToken string, practice bool) (Client, error) {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
 	// Create a new client
-	c := &Client{
+	c := Client{
 		Credentials: LoginCredentials{
 			RefreshToken: refreshToken,
 		},
@@ -616,12 +616,12 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 
 	err := c.Login(practice)
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
 	c.primaryAccount, err = c.getPrimaryAccount()
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
 	return c, nil
