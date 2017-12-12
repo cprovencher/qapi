@@ -125,7 +125,7 @@ func (c *Client) Login(practice bool) error {
 	return nil
 }
 
-func (c *Client) LoginCredentials() LoginCredentials {
+func (c *Client) GetCredentials() LoginCredentials {
 	return c.Credentials
 }
 
