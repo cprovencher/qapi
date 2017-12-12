@@ -125,6 +125,10 @@ func (c *Client) Login(practice bool) error {
 	return nil
 }
 
+func (c *Client) LoginCredentials() LoginCredentials {
+	return c.Credentials
+}
+
 // RevokeAuth revokes authorization of the refresh token
 // NOTE - You will have to create another manual authorization
 // on the Questrade website to use an application again.
